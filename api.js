@@ -43,14 +43,18 @@ function qs(url, params) {
 
 const APIS = {
   getTypes() {
-    return getRequest(config.BACKEND_URLS.GET_TYPE)
+    return getRequest(config.BACKEND_URLS.GET_TYPE).then(translateRes)
   },
   getResources(type) {
-    return getRequest(config.BACKEND_URLS.GET_RESOURCE)
+    return getRequest(config.BACKEND_URLS.GET_RESOURCE, { type }).then(translateRes)
   },
   downResource(type, name) {
-    return getRequest(config.BACKEND_URLS.DOWN_RESOURCE)
+    return getRequest(config.BACKEND_URLS.DOWN_RESOURCE, { type, name })
   }
+}
+
+function translateRes(res) {
+  return JSON.parse(res)
 }
 
 module.exports = APIS

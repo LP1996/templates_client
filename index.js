@@ -3,6 +3,7 @@ const decompress = require('decompress')
 const { version } = require('./package.json')
 
 const { success, warn, error } = require('./Logger')
+const { getTypes, getResources, downResource }  = require('./api')
 
 program.version(version)
 
@@ -10,18 +11,18 @@ program
   .command('list <type>')
   .description('list useable resources by type, use types check all types')
   .action(type => {
-    getResourcesByType(type).then(resources => {
-
-    })
+    getResources(type).then(res => {
+      msg(res.data)
+    }).catch(() => error(`get resources in ${type} fail`))
   })
 
 program
   .command('types')
   .description('list all available types')
   .action(() => {
-    getTypes().then(types => {
-
-    })
+    getTypes().then(res => {
+      msg(res.data)
+    }).catch(() => error(`get types fail`))
   })
 
 program
@@ -33,24 +34,33 @@ program
 
 program.parse(process.argv)
 
-async function downloadAndDecompress(type, name, dest) {
-  // TODO: download 
-  // const buf = new Buffer()
+function downloadAndDecompress(type, name, dest) {
+  downResource(type, name).then(async file => {
+    console.log(file)
+    if (typeof file === 'string') {
+      error('download file fail')
+      return
+    }
 
-  try {
-    await decompress('test.zip', dest || './')
-  } catch (err) {
-    error('decompress fail: ', err)
-    return
+    try {
+      await decompress(file, dest || './')
+    } catch (err) {
+      error('decompress fail: ', err)
+      return
+    }
+
+    success('download success')
+  })
+}
+
+function msg(arr) {
+  let msg = ''
+
+  for (let i = 0; i < arr.length; i++) {
+    const firstline = `${i + 1}.${arr[i].name}\n`
+    const secondline = `  ${arr[i].description}\n`
+    msg += (firstline + secondline)
   }
 
-  success('download success')
-}
-
-async function getTypes() {
-  
-}
-
-async function getResourcesByType(type) {
-
+  console.log(msg)
 }
