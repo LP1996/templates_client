@@ -22,6 +22,27 @@ function getRequest(url, params) {
   })
 }
 
+function downRequest(url, params) {
+  return new Promise((resolve, reject) => {
+    const req = request(qs(url, params), res => {
+      let loaded = Buffer.alloc(0)
+
+      res.on('data', chunk => {
+        loaded = Buffer.concat([loaded, chunk])
+      })
+
+      res.on('end', () => {
+        res = null
+        resolve(loaded)
+      })
+    })
+    req.on('error', err => {
+      reject(err)
+    })
+    req.end()
+  })
+}
+
 const qsExcludes = ['undefined', 'function']
 function qs(url, params) {
   if (!params) {
@@ -49,7 +70,7 @@ const APIS = {
     return getRequest(config.BACKEND_URLS.GET_RESOURCE, { type }).then(translateRes)
   },
   downResource(type, name) {
-    return getRequest(config.BACKEND_URLS.DOWN_RESOURCE, { type, name })
+    return downRequest(config.BACKEND_URLS.DOWN_RESOURCE, { type, name })
   }
 }
 

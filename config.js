@@ -1,4 +1,4 @@
-const host = 'http://localhost:8170'
+const host = 'http://192.168.133.65:8170'
 
 const config ={
   BACKEND_URLS: {
