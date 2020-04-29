@@ -5,9 +5,16 @@ const { success, warn, error } = require('./Logger')
 
 const globalCommandName = 'd'
 const execFileName = path.resolve(__dirname, './index.js')
-const command = 'npm config list --json'
+const getGlobalNpmRootcommand = 'npm config list --json'
+const cnReg = /(?:[\u3400-\u4DB5\u4E00-\u9FEA\uFA0E\uFA0F\uFA11\uFA13\uFA14\uFA1F\uFA21\uFA23\uFA24\uFA27-\uFA29]|[\uD840-\uD868\uD86A-\uD86C\uD86F-\uD872\uD874-\uD879][\uDC00-\uDFFF]|\uD869[\uDC00-\uDED6\uDF00-\uDFFF]|\uD86D[\uDC00-\uDF34\uDF40-\uDFFF]|\uD86E[\uDC00-\uDC1D\uDC20-\uDFFF]|\uD873[\uDC00-\uDEA1\uDEB0-\uDFFF]|\uD87A[\uDC00-\uDFE0])/
 
-exec('npm config list --json', (err, stdout, stderr) => {
+// 不允许路径中出现中文，中文会导致执行出错
+if (cnReg.test(execFileName)) {
+  error('current path has chinese part, please move project to an full english path')
+  return
+}
+
+exec(getGlobalNpmRootcommand, (err, stdout, stderr) => {
   if (err) {
     error(`run command wrong: ${command}`, err)
     return
@@ -23,16 +30,9 @@ exec('npm config list --json', (err, stdout, stderr) => {
   }
 
   const commandFilePath = `${npmPrefixPath}/${globalCommandName}.cmd`
+  const cmdContent = generateCmdContent(execFileName)
 
-  try {
-
-    // 文件可访问则表示文件存在，不许要再次注册
-    fs.accessSync(commandFilePath)
-    warn('\n', 'global command has been registed', '\n')
-    return
-  } catch (e) {}
-
-  fs.writeFile(commandFilePath, generateCmdContent(execFileName), (err) => {
+  fs.writeFile(commandFilePath, cmdContent, (err) => {
     if (err) {
       error(`writeFile global command file wrong`, err)
       return
